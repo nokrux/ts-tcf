@@ -1,0 +1,20 @@
+{
+  "name": "tcf",
+  "version": "1.0.0",
+  "description": "TCF (Target Communication Protocol) in typescript",
+  "main": "out/index.js",
+  "types": "out/index.d.ts",
+  "scripts": {
+    "compile":"tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "publish": "npm publish",
+    "patch":"npm version patch",
+    "vminor":"npm version minor",
+    "vmajor":"npm version major"
+  },
+  "keywords": [
+    "tcf"
+  ],
+  "author": "jde",
+  "license": "ISC"
+}
