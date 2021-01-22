@@ -1,1 +1,1 @@
-export { sayHello, sayGoodbye } from './hello-world'
+export { AbstractChannel } from './channel/abstractchannel'

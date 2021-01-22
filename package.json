@@ -6,7 +6,8 @@
   "types": "out/index.d.ts",
   "scripts": {
     "compile":"tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "tsc -watch -p ./",
+    "test": "node ./out/test/channel.test.js",
     "publish": "npm publish",
     "patch":"npm version patch",
     "vminor":"npm version minor",

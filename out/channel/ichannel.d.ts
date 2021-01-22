@@ -1,9 +1,6 @@
-import { IService } from '../services/iservice'
-import { IToken } from '../itoken'
-import { ICommandListener } from '../command/icommandlistener'
-import { IChannelListener } from './ichannellistener'
-import { IResult } from '../iresult'
-
+import { IService } from '../services/iservice';
+import { IChannelListener } from './ichannellistener';
+import { IResult } from '../iresult';
 /**
  * IChannel represents communication link connecting two endpoints (peers).
  * The channel asynchroniously transmits messages: commands, results and events.
@@ -11,15 +8,13 @@ import { IResult } from '../iresult'
  * Multiple channels may be used to connect the same peers, however no command or event
  * ordering is guaranteed across channels.
  */
-export interface IChannel{
-
+export interface IChannel {
     /**
      * @return channel current state
      */
     getState(): EState;
-
     /**
-     * 
+     *
      * @param service - a remote service that will be sent the command
      * @param name - command name
      * @param args - command arguments as string
@@ -30,10 +25,9 @@ export interface IChannel{
     addChannelListener(listener: IChannelListener): void;
     removeChannelListener(listener: IChannelListener): void;
     setServiceProxy<TService extends IService>(service: TService, proxy: IService): void;
-};
-
-export enum EState {
-    OPENNING,
-    OPEN,
-    CLOSED
-};
+}
+export declare enum EState {
+    OPENNING = 0,
+    OPEN = 1,
+    CLOSED = 2
+}
