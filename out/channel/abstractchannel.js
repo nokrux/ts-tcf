@@ -45,6 +45,56 @@ class AbstractChannel extends events_1.EventEmitter {
                 }
             }
         };
+        /**
+         * Handles TCF message
+         *
+         * @param data TCF message
+         *
+         * Command
+         *   C • <token> • <service> • <command> • <arguments> • <eom>
+         * Progress
+         *   P • <token> • <progress_data> • <eom>
+         * Result
+         *   R • <token> • <result_data> • <eom>
+         * Event
+         *   E • <service> • <event> • <event_data> • <eom>
+         * Flow
+         *   F • <traffic_congestion_level> • <eom>
+         *
+         * • = nil
+         * <eom> = eom
+         */
+        this.message = (data) => {
+            const self = this;
+            let elements = data.split(protocol_1.Protocol._nil);
+            if (elements.length < 3) {
+                throw new Error(`Message has too few parts`);
+            }
+            if (elements.pop() !== protocol_1.Protocol._eom) {
+                throw new Error(`Message has bad termination`);
+            }
+            // first element of TCF message give the type of the TCF message
+            const type = elements.shift();
+            switch (type) {
+                case 'E':
+                    self.decodeEvent(elements);
+                    break;
+                case 'P':
+                    self.decodeProgress(elements);
+                    break;
+                case 'R':
+                    self.decodeResult(elements);
+                    break;
+                case 'N':
+                    self.decodeUnknown(elements);
+                    break;
+                case 'F':
+                    self.decodeFlowControl(elements);
+                    break;
+                default:
+                    throw (new Error(`Unkown TCF message type: ${type}`));
+            }
+        };
         this.sendResult = (token, type, ...results) => {
             this.send(`${type}${protocol_1.Protocol._nil}${token}${protocol_1.Protocol._nil}${protocol_1.Protocol.stringify(results)}${protocol_1.Protocol._eom}`);
             this._pendingCommands.delete(token);
@@ -94,56 +144,6 @@ class AbstractChannel extends events_1.EventEmitter {
         this._congestionHandlers.forEach(handler => {
             handler.congestion(congestion);
         });
-    }
-    /**
-     * Handles TCF message
-     *
-     * @param data TCF message
-     *
-     * Command
-     *   C • <token> • <service> • <command> • <arguments> • <eom>
-     * Progress
-     *   P • <token> • <progress_data> • <eom>
-     * Result
-     *   R • <token> • <result_data> • <eom>
-     * Event
-     *   E • <service> • <event> • <event_data> • <eom>
-     * Flow
-     *   F • <traffic_congestion_level> • <eom>
-     *
-     * • = nil
-     * <eom> = eom
-     */
-    message(data) {
-        const self = this;
-        let elements = data.split(protocol_1.Protocol._nil);
-        if (elements.length < 3) {
-            throw new Error(`Message has too few parts`);
-        }
-        if (elements.pop() !== protocol_1.Protocol._eom) {
-            throw new Error(`Message has bad termination`);
-        }
-        // first element of TCF message give the type of the TCF message
-        const type = elements.shift();
-        switch (type) {
-            case 'E':
-                self.decodeEvent(elements);
-                break;
-            case 'P':
-                self.decodeProgress(elements);
-                break;
-            case 'R':
-                self.decodeResult(elements);
-                break;
-            case 'N':
-                self.decodeUnknown(elements);
-                break;
-            case 'F':
-                self.decodeFlowControl(elements);
-                break;
-            default:
-                throw (new Error(`Unkown TCF message type: ${type}`));
-        }
     }
     /**
      * Decodes TCF event message

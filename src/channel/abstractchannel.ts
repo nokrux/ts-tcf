@@ -132,7 +132,7 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      * • = nil
      * <eom> = eom
      */
-    private message(data: string): void {
+    public message = (data: string): void => {
         const self = this;
         let elements = data.split(Protocol._nil);
 

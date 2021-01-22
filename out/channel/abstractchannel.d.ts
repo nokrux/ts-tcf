@@ -71,7 +71,7 @@ export declare abstract class AbstractChannel extends EventEmitter implements IC
      * • = nil
      * <eom> = eom
      */
-    private message;
+    message: (data: string) => void;
     /**
      * Decodes TCF event message
      *
