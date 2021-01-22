@@ -1,3 +1,3 @@
 export interface IEventListener{
-    event(name: string, data: string) : void;
+    event(name: string, data: any) : void;
 }
