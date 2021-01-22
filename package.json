@@ -5,17 +5,20 @@
   "main": "out/index.js",
   "types": "out/index.d.ts",
   "scripts": {
-    "compile":"tsc",
+    "compile": "tsc",
     "watch": "tsc -watch -p ./",
     "test": "node ./out/test/channel.test.js",
     "publish": "npm publish",
-    "patch":"npm version patch",
-    "vminor":"npm version minor",
-    "vmajor":"npm version major"
+    "patch": "npm version patch",
+    "vminor": "npm version minor",
+    "vmajor": "npm version major"
   },
   "keywords": [
     "tcf"
   ],
   "author": "jde",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^14.14.22"
+  }
 }
