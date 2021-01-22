@@ -6,14 +6,19 @@ import { Protocol } from "../protocol";
 import { IService } from "../services/iservice";
 import { EState, IChannel } from "./ichannel";
 import { IChannelListener } from "./ichannellistener";
+import { EventEmitter } from 'events';
+import { ICongestionHandler } from "../icongestionhandler";
 
-export abstract class AbstractChannel implements IChannel{
+export abstract class AbstractChannel extends EventEmitter implements IChannel{
+
     private _state: EState;
     private _tokenCounter: number;
     private _pendingReplies = new Map<number, any[]>();
     private _pendingCommands = new Map<number, ICommand>();
+    private _congestionHandlers = new Array<ICongestionHandler>();
 
     constructor() { 
+        super();
         this._state = EState.OPENNING;
         this._tokenCounter = 0;
     }
@@ -24,6 +29,12 @@ export abstract class AbstractChannel implements IChannel{
         return this._state;
     }
 
+    /**
+     * 
+     * @param service 
+     * @param command 
+     * @param args 
+     */
     sendCommand = (service: IService, command: string, ...args: any[]): Promise<IResult> => {
         const self = this;
         const token = this._tokenCounter++;
@@ -42,7 +53,7 @@ export abstract class AbstractChannel implements IChannel{
      * @param error if there is an response error
      * @param args reply arguments
      */
-    private handleReply = (token: number, error: string, args: IResult) => {
+    private handleReply = (token: number, error: string, args: any) => {
         if (this._pendingReplies.get(token)) {
             let [resolve, reject, timeout] = this._pendingReplies.get(token);
             this._pendingReplies.delete(token);
@@ -53,6 +64,121 @@ export abstract class AbstractChannel implements IChannel{
                 clearTimeout(timeout);
                 resolve(args);
             }
+        }
+    }
+
+    /**
+     * Decodes a response to a command message
+     * 
+     * @param data [<token>, <error_code>, <result_data>]
+     */
+    private decodeResult(data: string[]): void {
+        let token = +data[0];
+        let errorReport = data[1];
+        let resultData = data[2];
+        
+        this.handleReply(token, errorReport, JSON.parse(resultData));
+    }
+
+    /**
+     * Decodes unknown TCF message
+     * 
+     * @param data unknown data 
+     */
+    private decodeUnknown(data: string[]): void {
+        throw new Error(`Remote don't know the command: ${data}`);
+    }
+
+    /**
+     * Decodes intermediate result from a progress message
+     * 
+     * @param data [<token>, <progress_data>]
+     */
+    private decodeProgress(data: string[]): void {
+        let token = +data[0];
+        let eventData = JSON.parse(data[1]);
+        this.emit('progress', +eventData['ProgressComplete'], +eventData['ProgressTotal'], eventData['Description']);
+    }
+
+    /**
+     * Decodes Flow TCF message
+     * 
+     * @param data [<traffic_congestion_level>]
+     */
+    private decodeFlowControl(data: string[]): void {
+        let congestion = +(data.shift() as string);
+
+        this._congestionHandlers.forEach(handler => {
+            handler.congestion(congestion);
+        });
+    }
+
+    /**
+     * Handles TCF message
+     * 
+     * @param data TCF message
+     * 
+     * Command
+     *   C • <token> • <service> • <command> • <arguments> • <eom>
+     * Progress
+     *   P • <token> • <progress_data> • <eom>
+     * Result
+     *   R • <token> • <result_data> • <eom>
+     * Event
+     *   E • <service> • <event> • <event_data> • <eom>
+     * Flow
+     *   F • <traffic_congestion_level> • <eom>
+     * 
+     * • = nil
+     * <eom> = eom
+     */
+    private message(data: string): void {
+        const self = this;
+        let elements = data.split(Protocol._nil);
+
+        if (elements.length < 3) {
+            throw new Error(`Message has too few parts`);
+        }
+        if (elements.pop() !== Protocol._eom) {
+            throw new Error(`Message has bad termination`);
+        }
+
+        // first element of TCF message give the type of the TCF message
+        const type = elements.shift();
+        switch (type) {
+            case 'E':
+                self.decodeEvent(elements);
+                break;
+            case 'P':
+                self.decodeProgress(elements);
+                break;
+            case 'R':
+                self.decodeResult(elements);
+                break;
+            case 'N':
+                self.decodeUnknown(elements);
+                break;
+            case 'F':
+                self.decodeFlowControl(elements);
+                break;
+            default:
+                throw (new Error(`Unkown TCF message type: ${type}`));
+        }
+    }
+
+    /**
+     * Decodes TCF event message
+     * 
+     * @param data [<service>, <event>, <event_data>]
+     */
+    private decodeEvent(data: string[]): void {
+        let service = data.shift() as string;
+        let event = {
+            command: data.shift() as string,
+            args: data
+        };
+        if (!this.emit(service, event)) {
+            throw new Error(`No event listener for ${service}`)
         }
     }
 
