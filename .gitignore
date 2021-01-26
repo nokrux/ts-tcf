@@ -3,3 +3,4 @@ out/**/*.js.map
 out/**
 out/*.js
 out/*.js.map
+node_modules/**
