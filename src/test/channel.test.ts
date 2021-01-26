@@ -1,4 +1,6 @@
 import { AbstractChannel } from '../channel/abstractchannel'
+import { IChannel } from '../channel/ichannel';
+import { Protocol } from '../protocol';
 import { IService } from '../services/iservice';
 
 class SerialChannel extends AbstractChannel{
@@ -9,11 +11,28 @@ class SerialChannel extends AbstractChannel{
 }
 
 class TestService implements IService{
+    private _channel: IChannel;
+    private _name: string = "Test";
+
+    constructor(channel: IChannel) {
+        this._channel = channel;
+    }
+
     getName(): string {
-        return "Test";
+        return this._name;
     }
     
+    async commmandTest() {
+        this._channel.sendCommand(this, "commandTest", { test: "ola" }, { gracias: true }).then((test: any) => {
+            console.log(test);
+        }).catch((reason: any) => {
+            console.log(reason);
+        });
+        
+    };
 }
 const channel = new SerialChannel();
-channel.sendCommand(new TestService, "commmandTest", "merde");
-channel.sendCommand(new TestService, "commmandTest", {test:1,ola:2}, 2, "5");
+const testService = new TestService(channel);
+testService.commmandTest();
+channel.message(`R${Protocol._nil}0${Protocol._nil}1${Protocol._nil}${Protocol.stringify([{ test: "ola" }, {walu:"ha"}])}${Protocol._eom}`);
+channel.message(`R${Protocol._nil}1${Protocol._nil}${Protocol._nil}${Protocol.stringify([{ test: "ola" }])}${Protocol._eom}`);

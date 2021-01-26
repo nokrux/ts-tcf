@@ -96,6 +96,8 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      */
     private decodeProgress(data: string[]): void {
         let token = +data[0];
+        let [resolve, reject, timeout] = this._pendingReplies.get(token);
+        timeout.refresh();
         let eventData = JSON.parse(data[1]);
         this.emit('progress', +eventData['ProgressComplete'], +eventData['ProgressTotal'], eventData['Description']);
     }
@@ -133,9 +135,10 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      * <eom> = eom
      */
     public message = (data: string): void => {
+        console.log(data);
         const self = this;
         let elements = data.split(Protocol._nil);
-
+        
         if (elements.length < 3) {
             throw new Error(`Message has too few parts`);
         }
