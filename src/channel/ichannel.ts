@@ -1,8 +1,6 @@
 import { IService } from '../services/iservice'
-import { IToken } from '../itoken'
-import { ICommandListener } from '../command/icommandlistener'
-import { IChannelListener } from './ichannellistener'
 import { IResult } from '../iresult'
+import { IEventListener } from '../event/ieventlistener'
 
 /**
  * IChannel represents communication link connecting two endpoints (peers).
@@ -19,17 +17,38 @@ export interface IChannel{
     getState(): EState;
 
     /**
+     * Sends a TCF command to the remote
      * 
-     * @param service - a remote service that will be sent the command
-     * @param name - command name
-     * @param args - command arguments as string
-     * @param done - call back object
+     * @param service TCF service that sends the command
+     * @param command name
+     * @param args additionnal arguments
      */
     sendCommand(service: IService, command: string, ...args: any[]): Promise<IResult>;
+
+    /**
+     * Sends a TCF event
+     * 
+     * @param service TCF service that sends the event
+     * @param event name
+     * @param args additionnal arguments
+     */
+    sendEvent(service: IService, event: string, ...args: any[]): void;
+
+    /**
+     * Send the result of a command
+     * 
+     * @param token 
+     * @param type 
+     * @param results 
+     */
     sendResult(token: number, type: string, ...results: any[]): void;
-    addChannelListener(listener: IChannelListener): void;
-    removeChannelListener(listener: IChannelListener): void;
-    setServiceProxy<TService extends IService>(service: TService, proxy: IService): void;
+
+    /**
+     * Adds an event listener on the channel
+     * 
+     * @param listener listen to event 
+     */
+    addEventListener(listener: IEventListener):void;
 };
 
 export enum EState {

@@ -1,4 +1,5 @@
 export interface IToken {
-    index: number;
-    cancel(): number;
+    resolve: Function;
+    reject: Function;
+    timeout: NodeJS.Timeout;
 };
