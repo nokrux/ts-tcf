@@ -17,7 +17,7 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
     private _pendingCommands = new Map<number, ICommand>();
     private _congestionHandlers = new Array<ICongestionHandler>();
 
-    constructor() { 
+    constructor() {
         super();
         this._state = EState.OPENNING;
         this._tokenCounter = 0;
@@ -40,7 +40,7 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
         const token = this._tokenCounter++;
         
         return new Promise(function (resolve, reject) {
-            const timeout = setTimeout(self.handleReply, 5000, token, "timeout 5s", '');
+            const timeout = setTimeout(self.handleReply, 1000, token, "timeout 1s", '');
             self._pendingReplies.set(token, [resolve, reject, timeout]);
             self.send(`C${Protocol._nil}${token}${Protocol._nil}${service.getName()}${Protocol._nil}${command}${Protocol._nil}${ Protocol.stringify(args)}${Protocol._eom}`);
         });
@@ -135,7 +135,6 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      * <eom> = eom
      */
     public message = (data: string): void => {
-        console.log(data);
         const self = this;
         let elements = data.split(Protocol._nil);
         
