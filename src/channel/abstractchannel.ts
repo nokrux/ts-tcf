@@ -24,14 +24,14 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
 
     abstract send(message: string): void;
 
-    sendEvent(service: IService, event: string, ...args: any[]): void {
-        this.send(`E${Protocol._nil}${service}${Protocol._nil}${event}${Protocol._nil}${Protocol.stringify(args)}${Protocol._eom}`);
-    }
-
     getState(): EState {
         return this._state;
     }
 
+    sendEvent(service: IService, event: string, ...args: any[]): void {
+        this.send(`E${Protocol._nil}${service}${Protocol._nil}${event}${Protocol._nil}${Protocol.stringify(args)}${Protocol._eom}`);
+    }
+    
     /**
      * 
      * @param service 
@@ -80,11 +80,8 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      * @param data [<token>, <error_code>, <result_data>]
      */
     private decodeResult(data: string[]): void {
-        let token = +data[0];
-        let errorReport = data[1];
-        let resultData = data[2];
-        
-        this.handleReply(token, errorReport, JSON.parse(resultData));
+        const [tokenKey, error, result] = data
+        this.handleReply(+tokenKey, error, JSON.parse(result));
     }
 
     /**
@@ -102,10 +99,9 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      * @param data [<token>, <progress_data>]
      */
     private decodeProgress(data: string[]): void {
-        const tokenKey = +data[0];
-        const token = this._pendingReplies.get(tokenKey);
-        token.timeout.refresh();
-        let eventData = JSON.parse(data[1]);
+        const [tokenKey, progress] = data;
+        this._pendingReplies.get(+tokenKey).timeout.refresh();
+        const eventData = JSON.parse(progress);
         this.emit('progress', +eventData['ProgressComplete'], +eventData['ProgressTotal'], eventData['Description']);
     }
 
@@ -181,10 +177,8 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
      * @param data [<service>, <event>, <event_data>]
      */
     private decodeEvent(data: string[]): void {
-        const service = data.shift() as string;
-        const event = data.shift() as string;
-        const args = JSON.parse(data.shift());
-        if (!this.emit(service, event, args)) {
+        const [service, event, args] = data;
+        if (!this.emit(service, event, JSON.parse(args))) {
             throw new Error(`No event listener for ${service}`)
         }
     }
