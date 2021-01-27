@@ -18,7 +18,7 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
 
     constructor() {
         super();
-        this._state = EState.OPENNING;
+        this._state = EState.CLOSED;
         this._tokenCounter = 0;
     }
 
@@ -28,10 +28,18 @@ export abstract class AbstractChannel extends EventEmitter implements IChannel{
         return this._state;
     }
 
+    opening(): void{
+        this._state = EState.OPENNING;
+    }
+
+    open(): void {
+        this._state = EState.OPEN;
+    }
+    
     sendEvent(service: IService, event: string, ...args: any[]): void {
         this.send(`E${Protocol._nil}${service}${Protocol._nil}${event}${Protocol._nil}${Protocol.stringify(args)}${Protocol._eom}`);
     }
-    
+
     /**
      * 
      * @param service 

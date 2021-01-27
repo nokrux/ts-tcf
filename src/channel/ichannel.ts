@@ -17,6 +17,16 @@ export interface IChannel{
     getState(): EState;
 
     /**
+     * Put channel'state in openning
+     */
+    opening(): void;
+
+    /**
+     * Put channel'state in open
+     */
+    open(): void;
+
+    /**
      * Sends a TCF command to the remote
      * 
      * @param service TCF service that sends the command
