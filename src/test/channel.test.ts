@@ -1,5 +1,4 @@
 import assert = require('assert');
-import { afterEach, teardown } from 'mocha';
 import { AbstractChannel } from '../channel/abstractchannel'
 import { IChannel } from '../channel/ichannel';
 import { Protocol } from '../protocol';
